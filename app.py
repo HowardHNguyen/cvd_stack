@@ -6,21 +6,17 @@ import matplotlib.pyplot as plt
 import requests
 from io import BytesIO
 
-# Function to combine split files
-def combine_files(part1_url, part2_url, output_file):
-    response1 = requests.get(part1_url)
-    response2 = requests.get(part2_url)
-
+# Function to download and save the combined model file
+def download_and_save_model(url, output_file):
+    response = requests.get(url)
     with open(output_file, 'wb') as f:
-        f.write(response1.content)
-        f.write(response2.content)
+        f.write(response.content)
 
-# URLs for the split parts
-part1_url = 'https://raw.githubusercontent.com/HowardHNguyen/cvd_stack/master/stacking_model_calibrated_part1.pkl'
-part2_url = 'https://raw.githubusercontent.com/HowardHNguyen/cvd_stack/master/stacking_model_calibrated_part2.pkl'
+# URL for the combined model file
+model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
 
-# Combine the split parts
-combine_files(part1_url, part2_url, 'stacking_model_calibrated.pkl')
+# Download and save the model file
+download_and_save_model(model_url, 'stacking_model_calibrated.pkl')
 
 # Load the combined model
 try:
