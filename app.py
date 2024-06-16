@@ -6,21 +6,27 @@ import matplotlib.pyplot as plt
 import requests
 from io import BytesIO
 
-# Function to download and save the combined model file
+# Function to download and save the model file
 def download_and_save_model(url, output_file):
     response = requests.get(url)
+    response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
     with open(output_file, 'wb') as f:
         f.write(response.content)
 
-# URL for the combined model file
+# URL for the combined model file (Update this with your GoDaddy URL)
 model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
 
 # Download and save the model file
-download_and_save_model(model_url, 'stacking_model_calibrated.pkl')
+try:
+    download_and_save_model(model_url, 'stacking_model_calibrated.pkl')
+    st.success("Model downloaded successfully.")
+except requests.exceptions.RequestException as e:
+    st.error(f"Error downloading {model_url}: {e}")
 
 # Load the combined model
 try:
-    model = joblib.load('stacking_model_calibrated.pkl')
+    stacking_model = joblib.load('stacking_model_calibrated.pkl')
+    st.success("Model loaded successfully.")
 except FileNotFoundError as e:
     st.error(f"Error loading models: {e}")
 
@@ -29,65 +35,73 @@ try:
     url = "https://raw.githubusercontent.com/HowardHNguyen/cvd/master/frmgham2.csv"
     data = pd.read_csv(url)
     data.fillna(data.mean(), inplace=True)
+    st.success("Data loaded successfully.")
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
 # UI setup
-st.title("Cardiovascular Disease Prediction")
+st.title("Cardiovascular Disease Prediction App by Howard Nguyen")
 
-st.sidebar.header('User Input Features')
-age = st.sidebar.slider('Age', 0, 120, 50)
-totchol = st.sidebar.slider('Total Cholesterol', 100, 600, 200)
-sysbp = st.sidebar.slider('Systolic Blood Pressure', 80, 250, 120)
-diabp = st.sidebar.slider('Diastolic Blood Pressure', 50, 150, 80)
-bmi = st.sidebar.slider('Body Mass Index', 10.0, 60.0, 25.0)
-glucose = st.sidebar.slider('Glucose', 40, 500, 90)
-heartrate = st.sidebar.slider('Heart Rate', 40, 180, 70)
-cig_per_day = st.sidebar.slider('Cigarettes per Day', 0, 60, 0)
+st.sidebar.header('Enter your parameters')
+age = st.sidebar.slider('Enter your age:', 32, 81, 54)
+totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
+sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
+diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
+bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
+cigs_per_day = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 0)
+current_smoker = st.sidebar.selectbox('Current Smoker:', [0, 1])
+glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
+diabetes = st.sidebar.selectbox('Diabetes:', [0, 1])
+heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
+bp_meds = st.sidebar.selectbox('On BP Meds:', [0, 1])
+stroke = st.sidebar.selectbox('Stroke:', [0, 1])
+hypertension = st.sidebar.selectbox('Hypertension:', [0, 1])
 
-# Create input data
-input_data = pd.DataFrame({
-    'AGE': [age],
-    'TOTCHOL': [totchol],
-    'SYSBP': [sysbp],
-    'DIABP': [diabp],
-    'BMI': [bmi],
-    'GLUCOSE': [glucose],
-    'HEARTRTE': [heartrate],
-    'CIGPDAY': [cig_per_day]
-})
+user_data = {
+    'AGE': age,
+    'TOTCHOL': totchol,
+    'SYSBP': sysbp,
+    'DIABP': diabp,
+    'BMI': bmi,
+    'CIGPDAY': cigs_per_day,
+    'CURSMOKE': current_smoker,
+    'GLUCOSE': glucose,
+    'DIABETES': diabetes,
+    'HEARTRTE': heartrate,
+    'BPMEDS': bp_meds,
+    'PREVAP': stroke,
+    'HYPERTEN': hypertension
+}
 
-st.subheader('User Input features')
-st.write(input_data)
+features = pd.DataFrame(user_data, index=[0])
+st.write(features)
 
-# Predict
 if st.button('Predict'):
-    predictions = model.predict(input_data)
-    prediction_proba = model.predict_proba(input_data)
-
-    st.subheader('Predictions')
-    st.write(f'Prediction: {predictions[0]}')
-    st.write(f'Prediction Probability: {prediction_proba[0][1]:.2f}')
-
-    # Plot ROC Curve and Feature Importance
-    st.subheader('Model Performance Metrics')
-
-    # Example ROC curve (use actual validation data for real application)
-    plt.figure()
-    plt.plot([0, 1], [0, 1], 'k--')
-    plt.plot([0, 0.2, 0.8, 1], [0, 0.4, 0.6, 1], label='Model')
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title('ROC Curve')
-    plt.legend(loc='best')
-    st.pyplot(plt)
-
-    # Example feature importance (use actual feature importance for real application)
-    feature_importance = model.named_estimators_['randomforestclassifier'].feature_importances_
-    sorted_idx = np.argsort(feature_importance)
-    plt.figure()
-    plt.barh(range(len(sorted_idx)), feature_importance[sorted_idx], align='center')
-    plt.yticks(range(len(sorted_idx)), input_data.columns[sorted_idx])
-    plt.xlabel('Feature Importance')
-    plt.title('Feature Importance')
-    st.pyplot(plt)
+    try:
+        prediction = stacking_model.predict(features)
+        prediction_proba = stacking_model.predict_proba(features)
+        st.subheader('Predictions')
+        st.write(f'Stacking Model Prediction: CVD with probability {prediction_proba[0][1]:.2f}')
+        
+        st.subheader('Prediction Probability Distribution')
+        fig, ax = plt.subplots()
+        ax.bar(['Stacking Model'], prediction_proba[0])
+        st.pyplot(fig)
+        
+        st.subheader('Feature Importances (Stacking Model)')
+        importances = stacking_model.named_estimators_['randomforestclassifier'].feature_importances_
+        indices = np.argsort(importances)
+        plt.figure()
+        plt.title('Feature Importances')
+        plt.barh(range(len(indices)), importances[indices], align='center')
+        plt.yticks(range(len(indices)), [features.columns[i] for i in indices])
+        st.pyplot(plt)
+        
+        st.subheader('Model Performance')
+        fig, ax = plt.subplots()
+        # Replace with actual ROC plotting logic
+        ax.plot([0, 1], [0, 1], 'k--')
+        st.pyplot(fig)
+        
+    except Exception as e:
+        st.error(f"Error making predictions: {e}")
