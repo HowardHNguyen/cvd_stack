@@ -8,10 +8,15 @@ from io import BytesIO
 
 # Function to download and save the model file
 def download_and_save_model(url, output_file):
-    response = requests.get(url)
-    response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
-    with open(output_file, 'wb') as f:
-        f.write(response.content)
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
+        with open(output_file, 'wb') as f:
+            f.write(response.content)
+        st.success(f"Model downloaded successfully from {url}")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error downloading {url}: {e}")
+        raise e
 
 # URL for the combined model file (Update this with your GoDaddy URL)
 model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
@@ -19,9 +24,8 @@ model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
 # Download and save the model file
 try:
     download_and_save_model(model_url, 'stacking_model_calibrated.pkl')
-    st.success("Model downloaded successfully.")
-except requests.exceptions.RequestException as e:
-    st.error(f"Error downloading {model_url}: {e}")
+except Exception as e:
+    st.stop()  # Stop execution if model download fails
 
 # Load the combined model
 try:
@@ -29,6 +33,7 @@ try:
     st.success("Model loaded successfully.")
 except FileNotFoundError as e:
     st.error(f"Error loading models: {e}")
+    st.stop()
 
 # Load data
 try:
@@ -38,6 +43,7 @@ try:
     st.success("Data loaded successfully.")
 except Exception as e:
     st.error(f"Error loading data: {e}")
+    st.stop()
 
 # UI setup
 st.title("Cardiovascular Disease Prediction App by Howard Nguyen")
