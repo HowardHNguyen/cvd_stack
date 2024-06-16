@@ -1,113 +1,66 @@
 import streamlit as st
-import joblib
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
+import joblib
 import requests
 from io import BytesIO
 
-# Function to download and save the model file
-def download_and_save_model(url, output_file):
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Will raise an HTTPError if the HTTP request returned an unsuccessful status code
-        with open(output_file, 'wb') as f:
-            f.write(response.content)
-        st.success(f"Model downloaded successfully from {url}")
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error downloading {url}: {e}")
-        raise e
-
-# URL for the combined model file (Update this with your GoDaddy URL)
+# URL for the combined model file
 model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
 
-# Download and save the model file
-try:
-    download_and_save_model(model_url, 'stacking_model_calibrated.pkl')
-except Exception as e:
-    st.stop()  # Stop execution if model download fails
+@st.cache_resource
+def load_model(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    model_file = BytesIO(response.content)
+    model = joblib.load(model_file)
+    return model
 
-# Load the combined model
-try:
-    stacking_model = joblib.load('stacking_model_calibrated.pkl')
-    st.success("Model loaded successfully.")
-except FileNotFoundError as e:
-    st.error(f"Error loading models: {e}")
-    st.stop()
+stacking_model = load_model(model_url)
 
-# Load data
-try:
-    url = "https://raw.githubusercontent.com/HowardHNguyen/cvd/master/frmgham2.csv"
-    data = pd.read_csv(url)
-    data.fillna(data.mean(), inplace=True)
-    st.success("Data loaded successfully.")
-except Exception as e:
-    st.error(f"Error loading data: {e}")
-    st.stop()
-
-# UI setup
 st.title("Cardiovascular Disease Prediction App by Howard Nguyen")
+st.write("Enter your parameters and click Predict to get the results.")
 
-st.sidebar.header('Enter your parameters')
-age = st.sidebar.slider('Enter your age:', 32, 81, 54)
-totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
-sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
-diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
-bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
-cigs_per_day = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 0)
-current_smoker = st.sidebar.selectbox('Current Smoker:', [0, 1])
-glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
-diabetes = st.sidebar.selectbox('Diabetes:', [0, 1])
-heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
-bp_meds = st.sidebar.selectbox('On BP Meds:', [0, 1])
-stroke = st.sidebar.selectbox('Stroke:', [0, 1])
-hypertension = st.sidebar.selectbox('Hypertension:', [0, 1])
+# Input features
+age = st.slider("Enter your age:", 32, 81, 54)
+totchol = st.slider("Total Cholesterol:", 107, 696, 200)
+sysbp = st.slider("Systolic Blood Pressure:", 83, 295, 151)
+diabp = st.slider("Diastolic Blood Pressure:", 30, 150, 89)
+bmi = st.slider("BMI:", 14.43, 56.80, 26.77)
+cigpday = st.slider("Cigarettes Per Day:", 0, 90, 20)
+cursmoke = st.selectbox("Current Smoker:", [0, 1])
+glucose = st.slider("Glucose:", 39, 478, 117)
+diabetes = st.selectbox("Diabetes:", [0, 1])
+heartrate = st.slider("Heart Rate:", 37, 220, 91)
+prevap = st.selectbox("Prevalent Ap:", [0, 1])
+stroke = st.selectbox("Stroke:", [0, 1])
 
-user_data = {
-    'AGE': age,
-    'TOTCHOL': totchol,
-    'SYSBP': sysbp,
-    'DIABP': diabp,
-    'BMI': bmi,
-    'CIGPDAY': cigs_per_day,
-    'CURSMOKE': current_smoker,
-    'GLUCOSE': glucose,
-    'DIABETES': diabetes,
-    'HEARTRTE': heartrate,
-    'BPMEDS': bp_meds,
-    'PREVAP': stroke,
-    'HYPERTEN': hypertension
-}
+# Constructing DataFrame for prediction
+input_data = pd.DataFrame({
+    'AGE': [age],
+    'TOTCHOL': [totchol],
+    'SYSBP': [sysbp],
+    'DIABP': [diabp],
+    'BMI': [bmi],
+    'CIGPDAY': [cigpday],
+    'CURSMOKE': [cursmoke],
+    'GLUCOSE': [glucose],
+    'DIABETES': [diabetes],
+    'HEARTRTE': [heartrate],
+    'PREVAP': [prevap],
+    'STROKE': [stroke]
+})
 
-features = pd.DataFrame(user_data, index=[0])
-st.write(features)
+st.write("### Input Parameters")
+st.write(input_data)
 
-if st.button('Predict'):
+# Prediction
+if st.button("Predict"):
     try:
-        prediction = stacking_model.predict(features)
-        prediction_proba = stacking_model.predict_proba(features)
-        st.subheader('Predictions')
-        st.write(f'Stacking Model Prediction: CVD with probability {prediction_proba[0][1]:.2f}')
+        predictions = stacking_model.predict_proba(input_data)
+        rf_pred = predictions[:, 1]
         
-        st.subheader('Prediction Probability Distribution')
-        fig, ax = plt.subplots()
-        ax.bar(['Stacking Model'], prediction_proba[0])
-        st.pyplot(fig)
-        
-        st.subheader('Feature Importances (Stacking Model)')
-        importances = stacking_model.named_estimators_['randomforestclassifier'].feature_importances_
-        indices = np.argsort(importances)
-        plt.figure()
-        plt.title('Feature Importances')
-        plt.barh(range(len(indices)), importances[indices], align='center')
-        plt.yticks(range(len(indices)), [features.columns[i] for i in indices])
-        st.pyplot(plt)
-        
-        st.subheader('Model Performance')
-        fig, ax = plt.subplots()
-        # Replace with actual ROC plotting logic
-        ax.plot([0, 1], [0, 1], 'k--')
-        st.pyplot(fig)
+        st.write(f"Random Forest Prediction: CVD with probability {rf_pred[0]:.2f}")
         
     except Exception as e:
         st.error(f"Error making predictions: {e}")
