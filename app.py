@@ -150,6 +150,7 @@ if st.sidebar.button('Predict'):
         ax.set_yticks(range(len(indices)))
         ax.set_yticklabels([feature_columns[i] for i in indices])
         ax.set_xlabel('Importance')
+        ax.set_xlim(0, 0.25)  # Adjust the x-axis limits for better visualization
         st.pyplot(fig)
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
