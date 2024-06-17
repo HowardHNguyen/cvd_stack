@@ -129,8 +129,11 @@ if st.sidebar.button('Predict'):
         for name, estimator in stacking_model_calibrated.named_estimators_.items():
             if hasattr(estimator, 'feature_importances_'):
                 feature_importances += estimator.feature_importances_
+                st.write(f"Feature importances from {name}: {estimator.feature_importances_}")
 
         feature_importances /= len(stacking_model_calibrated.named_estimators_)
+
+        st.write(f"Aggregated feature importances: {feature_importances}")
 
         fig, ax = plt.subplots()
         indices = np.argsort(feature_importances)
