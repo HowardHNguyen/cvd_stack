@@ -124,14 +124,13 @@ if st.sidebar.button('Predict'):
     st.subheader('Feature Importances')
     try:
         # Access feature importances from base models in stacking
-        base_models = stacking_model_calibrated.estimators_
         feature_importances = np.zeros(len(feature_columns))
 
-        for base_model in base_models:
-            if hasattr(base_model, 'feature_importances_'):
-                feature_importances += base_model.feature_importances_
+        for name, estimator in stacking_model_calibrated.named_estimators_.items():
+            if hasattr(estimator, 'feature_importances_'):
+                feature_importances += estimator.feature_importances_
 
-        feature_importances /= len(base_models)
+        feature_importances /= len(stacking_model_calibrated.named_estimators_)
 
         fig, ax = plt.subplots()
         indices = np.argsort(feature_importances)
