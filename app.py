@@ -136,42 +136,12 @@ if st.sidebar.button('Predict'):
     except Exception as e:
         st.error(f"Error plotting ROC curve: {e}")
 
-    # Plot feature importances
+    # Plot feature importances for Random Forest only
     st.subheader('Feature Importances')
     try:
-        feature_importances = np.zeros(len(feature_columns))
-        total_estimators = 0
-
-        for name, estimator in stacking_model_calibrated.named_estimators_.items():
-            st.write(f"Estimator: {name}, Type: {type(estimator)}")
-            if hasattr(estimator, 'feature_importances_'):
-                st.write(f"Feature importances from {name}: {estimator.feature_importances_}")
-                feature_importances += estimator.feature_importances_
-                total_estimators += 1
-            elif hasattr(estimator, 'base_estimator_') and hasattr(estimator.base_estimator_, 'feature_importances_'):
-                st.write(f"Feature importances from {name}: {estimator.base_estimator_.feature_importances_}")
-                feature_importances += estimator.base_estimator_.feature_importances_
-                total_estimators += 1
-            elif hasattr(estimator, 'coef_'):
-                st.write(f"Feature importances from {name}: {estimator.coef_}")
-                feature_importances += np.abs(estimator.coef_).flatten()
-                total_estimators += 1
-            elif hasattr(estimator, 'estimator'):
-                if hasattr(estimator.estimator, 'feature_importances_'):
-                    st.write(f"Feature importances from {name}: {estimator.estimator.feature_importances_}")
-                    feature_importances += estimator.estimator.feature_importances_
-                    total_estimators += 1
-                elif hasattr(estimator.estimator, 'coef_'):
-                    st.write(f"Feature importances from {name}: {estimator.estimator.coef_}")
-                    feature_importances += np.abs(estimator.estimator.coef_).flatten()
-                    total_estimators += 1
-
-        if total_estimators > 0:
-            feature_importances /= total_estimators
-        else:
-            st.write("No base estimator has feature_importances_ or coef_ attribute.")
-
-        st.write(f"Aggregated feature importances: {feature_importances}")
+        rf_model = stacking_model_calibrated.named_estimators_['rf']
+        feature_importances = rf_model.feature_importances_
+        st.write(f"Feature importances from Random Forest: {feature_importances}")
 
         fig, ax = plt.subplots()
         indices = np.argsort(feature_importances)
