@@ -54,7 +54,7 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 54)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 40)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
@@ -63,7 +63,7 @@ def user_input_features():
     glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
     diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
     heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
-    cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 20)
+    cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 2)
     bpmeds = st.sidebar.selectbox('On BP Meds:', (0, 1))
     stroke = st.sidebar.selectbox('Stroke:', (0, 1))
     hyperten = st.sidebar.selectbox('Hypertension:', (0, 1))
@@ -125,13 +125,19 @@ if st.sidebar.button('Predict'):
     try:
         # Access feature importances from base models in stacking
         feature_importances = np.zeros(len(feature_columns))
+        total_estimators = 0
 
         for name, estimator in stacking_model_calibrated.named_estimators_.items():
+            st.write(f"Estimator: {name}, Type: {type(estimator)}")
             if hasattr(estimator, 'feature_importances_'):
-                feature_importances += estimator.feature_importances_
                 st.write(f"Feature importances from {name}: {estimator.feature_importances_}")
+                feature_importances += estimator.feature_importances_
+                total_estimators += 1
 
-        feature_importances /= len(stacking_model_calibrated.named_estimators_)
+        if total_estimators > 0:
+            feature_importances /= total_estimators
+        else:
+            st.write("No base estimator has feature_importances_ attribute.")
 
         st.write(f"Aggregated feature importances: {feature_importances}")
 
