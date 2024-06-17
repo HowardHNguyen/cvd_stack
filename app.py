@@ -139,18 +139,26 @@ if st.sidebar.button('Predict'):
     # Plot feature importances for Random Forest only
     st.subheader('Feature Importances')
     try:
-        rf_model = stacking_model_calibrated.named_estimators_['rf']
-        base_rf_model = rf_model.estimator if hasattr(rf_model, 'estimator') else rf_model
-        feature_importances = base_rf_model.feature_importances_
-        st.write(f"Feature importances from Random Forest: {feature_importances}")
+        if stacking_model_calibrated is not None:
+            st.write(f"Stacking model estimators: {stacking_model_calibrated.named_estimators_}")
+            rf_model = stacking_model_calibrated.named_estimators_.get('rf', None)
+            if rf_model is not None:
+                st.write(f"RF Model: {rf_model}")
+                base_rf_model = rf_model.estimator if hasattr(rf_model, 'estimator') else rf_model
+                feature_importances = base_rf_model.feature_importances_
+                st.write(f"Feature importances from Random Forest: {feature_importances}")
 
-        fig, ax = plt.subplots()
-        indices = np.argsort(feature_importances)
-        ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
-        ax.set_yticks(range(len(indices)))
-        ax.set_yticklabels([feature_columns[i] for i in indices])
-        ax.set_xlabel('Importance')
-        st.pyplot(fig)
+                fig, ax = plt.subplots()
+                indices = np.argsort(feature_importances)
+                ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
+                ax.set_yticks(range(len(indices)))
+                ax.set_yticklabels([feature_columns[i] for i in indices])
+                ax.set_xlabel('Importance')
+                st.pyplot(fig)
+            else:
+                st.error("Random Forest model not found in the stacking model.")
+        else:
+            st.error("Stacking model is None.")
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
