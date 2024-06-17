@@ -1,57 +1,154 @@
 import streamlit as st
 import pandas as pd
 import joblib
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.calibration import calibration_curve
+from sklearn.metrics import roc_curve, roc_auc_score
 import urllib.request
+import os
 
-# URL to load the model
+# Function to download the file
+def download_file(url, dest):
+    try:
+        urllib.request.urlretrieve(url, dest)
+        return True
+    except Exception as e:
+        st.error(f"Error downloading {url}: {e}")
+        return False
+
+# URL for the combined model file
 model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
 
-# Download and load the model
+# Local path for the model file
+model_path = 'stacking_model_calibrated.pkl'
+
+# Download the model if not already present
+if not os.path.exists(model_path):
+    st.info(f"Downloading {model_path}...")
+    download_file(model_url, model_path)
+
+# Load the combined model
 try:
-    with st.spinner(f'Downloading {model_url}...'):
-        filename, _ = urllib.request.urlretrieve(model_url)
-    with st.spinner(f'Loading model...'):
-        stacking_model = joblib.load(filename)
-    st.success(f'Model downloaded successfully from {model_url}')
+    stacking_model_calibrated = joblib.load(model_path)
 except Exception as e:
-    st.error(f"Error downloading {model_url}: {str(e)}")
-    st.stop()
+    st.error(f"Error loading model: {e}")
 
-st.title('Cardiovascular Disease Prediction App by Howard Nguyen')
-st.write('Enter your parameters and click Predict to get the results.')
+# Load the dataset
+data_url = 'https://raw.githubusercontent.com/HowardHNguyen/cvd/master/frmgham2.csv'
+try:
+    data = pd.read_csv(data_url)
+except Exception as e:
+    st.error(f"Error loading data: {e}")
 
-col1, col2 = st.columns(2)
+# Handle missing values by replacing them with the mean of the respective columns
+if 'data' in locals():
+    data.fillna(data.mean(), inplace=True)
 
-with col1:
-    age = st.slider('Enter your age:', 32, 81, 54)
-    totchol = st.slider('Total Cholesterol:', 107, 696, 200)
-    sysbp = st.slider('Systolic Blood Pressure:', 83, 295, 151)
-    diabp = st.slider('Diastolic Blood Pressure:', 30, 150, 89)
-    bmi = st.slider('BMI:', 14.43, 56.80, 26.77)
-    cigday = st.slider('Cigarettes Per Day:', 0, 90, 20)
-    cursmoke = st.selectbox('Current Smoker:', [0, 1])
+# Define the feature columns
+feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE', 
+                   'GLUCOSE', 'DIABETES', 'HEARTRTE', 'CIGPDAY', 'BPMEDS', 
+                   'STROKE', 'HYPERTEN']
 
-with col2:
-    glucose = st.slider('Glucose:', 39, 478, 117)
-    diabetes = st.selectbox('Diabetes:', [0, 1])
-    heartrate = st.slider('Heart Rate:', 37, 220, 91)
-    prevap = st.selectbox('Prevalent Ap:', [0, 1])
-    stroke = st.selectbox('Stroke:', [0, 1])
-    bpmeds = st.selectbox('On BP Meds:', [0, 1])
-    hyperten = st.selectbox('Hypertension:', [0, 1])
+# Sidebar for input parameters
+st.sidebar.header('Enter your parameters')
 
-input_data = pd.DataFrame({
-    'AGE': [age], 'TOTCHOL': [totchol], 'SYSBP': [sysbp], 'DIABP': [diabp], 'BMI': [bmi],
-    'CIGPDAY': [cigday], 'CURSMOKE': [cursmoke], 'GLUCOSE': [glucose], 'DIABETES': [diabetes],
-    'HEARTRTE': [heartrate], 'PREVAP': [prevap], 'STROKE': [stroke], 'BPMEDS': [bpmeds], 'HYPERTEN': [hyperten]
-})
+def user_input_features():
+    age = st.sidebar.slider('Enter your age:', 32, 81, 54)
+    totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
+    sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
+    diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
+    bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
+    cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))
+    glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
+    diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
+    heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
+    cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 20)
+    bpmeds = st.sidebar.selectbox('On BP Meds:', (0, 1))
+    stroke = st.sidebar.selectbox('Stroke:', (0, 1))
+    hyperten = st.sidebar.selectbox('Hypertension:', (0, 1))
+    
+    data = {
+        'AGE': age,
+        'TOTCHOL': totchol,
+        'SYSBP': sysbp,
+        'DIABP': diabp,
+        'BMI': bmi,
+        'CURSMOKE': cursmoke,
+        'GLUCOSE': glucose,
+        'DIABETES': diabetes,
+        'HEARTRTE': heartrate,
+        'CIGPDAY': cigpday,
+        'BPMEDS': bpmeds,
+        'STROKE': stroke,
+        'HYPERTEN': hyperten
+    }
+    features = pd.DataFrame(data, index=[0])
+    return features
 
-st.subheader('Input Parameters')
-st.table(input_data)
+input_df = user_input_features()
 
-if st.button('Predict'):
+# Apply the model to make predictions
+if st.sidebar.button('Predict'):
     try:
-        rf_proba = stacking_model.predict_proba(input_data)[:, 1]
-        st.success(f'Your CVD probability prediction: {rf_proba[0]:.2f}')
+        stacking_proba_calibrated = stacking_model_calibrated.predict_proba(input_df)[:, 1]
     except Exception as e:
-        st.error(f"Error making predictions: {str(e)}")
+        st.error(f"Error making predictions: {e}")
+
+    st.write("""
+    ## Your CVD Probability Prediction Results
+    This app predicts the probability of cardiovascular disease (CVD) using user inputs.
+    """)
+
+    st.subheader('Predictions')
+    try:
+        st.write(f"- Stacking model: Your CVD with probability prediction is {stacking_proba_calibrated[0]:.2f}")
+    except:
+        pass
+
+    # Plot the prediction probability distribution
+    st.subheader('Prediction Probability Distribution')
+    try:
+        fig, ax = plt.subplots()
+        bars = ax.bar(['Stacking Model'], [stacking_proba_calibrated[0]], color=['blue'])
+        ax.set_ylim(0, 1)
+        ax.set_ylabel('Probability')
+        for bar in bars:
+            yval = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2.0, yval, f'{yval:.2f}', va='bottom')  # va: vertical alignment
+        st.pyplot(fig)
+    except:
+        pass
+
+    # Plot feature importances
+    st.subheader('Feature Importances')
+    try:
+        base_model = stacking_model_calibrated.estimators_[0]  # Access the base estimator
+        fig, ax = plt.subplots()
+        importances = base_model.feature_importances_
+        indices = np.argsort(importances)
+        ax.barh(range(len(indices)), importances[indices], color='blue', align='center')
+        ax.set_yticks(range(len(indices)))
+        ax.set_yticklabels([feature_columns[i] for i in indices])
+        ax.set_xlabel('Importance')
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error plotting feature importances: {e}")
+
+    # Plot ROC curve
+    st.subheader('Model Performance')
+    try:
+        fig, ax = plt.subplots()
+        fpr, tpr, _ = roc_curve(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
+        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {roc_auc_score(data["CVD"], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1]):.2f})')
+        ax.plot([0, 1], [0, 1], 'k--')
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title('ROC Curve')
+        ax.legend(loc='best')
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error plotting ROC curve: {e}")
+else:
+    st.write("## CVD Prediction App by Howard Nguyen")
+    st.write("#### Enter your parameters and click Predict to get the results.")
