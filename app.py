@@ -54,18 +54,18 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 33)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 54)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
-    bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)  
-    glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
+    bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
     heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
+    glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
     cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 20)
-    diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
-    cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))
-    bpmeds = st.sidebar.selectbox('On BP Meds:', (0, 1))
     stroke = st.sidebar.selectbox('Stroke:', (0, 1))
+    cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))   
+    diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
+    bpmeds = st.sidebar.selectbox('On BP Meds:', (0, 1))
     hyperten = st.sidebar.selectbox('Hypertension:', (0, 1))
     
     data = {
@@ -164,7 +164,8 @@ if st.sidebar.button('Predict'):
     try:
         fig, ax = plt.subplots()
         fpr, tpr, _ = roc_curve(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
-        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {roc_auc_score(data["CVD"], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])::.2f})')
+        auc_score = roc_auc_score(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
+        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {auc_score:.2f})')
         ax.plot([0, 1], [0, 1], 'k--')
         ax.set_xlabel('False Positive Rate')
         ax.set_ylabel('True Positive Rate')
