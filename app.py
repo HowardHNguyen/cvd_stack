@@ -139,8 +139,9 @@ if st.sidebar.button('Predict'):
     # Plot feature importances for Random Forest only
     st.subheader('Feature Importances')
     try:
-        rf_model = stacking_model_calibrated.named_estimators_['rf'].estimator
-        feature_importances = rf_model.feature_importances_
+        rf_model = stacking_model_calibrated.named_estimators_['rf']
+        base_rf_model = rf_model.estimator if hasattr(rf_model, 'estimator') else rf_model
+        feature_importances = base_rf_model.feature_importances_
         st.write(f"Feature importances from Random Forest: {feature_importances}")
 
         fig, ax = plt.subplots()
