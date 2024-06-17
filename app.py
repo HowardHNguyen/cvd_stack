@@ -23,7 +23,7 @@ st.title("Cardiovascular Disease Prediction App by Howard Nguyen")
 st.write("Enter your parameters and click Predict to get the results.")
 
 # Create two columns for the layout
-col1, col2 = st.columns([1, 1])
+col1, col2 = st.columns(2)
 
 with col1:
     age = st.slider("Enter your age:", 32, 81, 54)
