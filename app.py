@@ -128,6 +128,7 @@ if st.sidebar.button('Predict'):
         total_estimators = 0
 
         for name, estimator in stacking_model_calibrated.named_estimators_.items():
+            st.write(f"Estimator: {name}, Type: {type(estimator)}")
             if hasattr(estimator, 'feature_importances_'):
                 st.write(f"Feature importances from {name}: {estimator.feature_importances_}")
                 feature_importances += estimator.feature_importances_
@@ -150,7 +151,6 @@ if st.sidebar.button('Predict'):
         ax.set_yticks(range(len(indices)))
         ax.set_yticklabels([feature_columns[i] for i in indices])
         ax.set_xlabel('Importance')
-        ax.set_xlim(0, 0.25)  # Adjust the x-axis limits for better visualization
         st.pyplot(fig)
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
