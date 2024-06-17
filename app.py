@@ -123,11 +123,19 @@ if st.sidebar.button('Predict'):
     # Plot feature importances
     st.subheader('Feature Importances')
     try:
-        base_model = stacking_model_calibrated.estimators_[0]  # Access the base estimator
+        # Access feature importances from base models in stacking
+        base_models = stacking_model_calibrated.estimators_
+        feature_importances = np.zeros(len(feature_columns))
+
+        for base_model in base_models:
+            if hasattr(base_model, 'feature_importances_'):
+                feature_importances += base_model.feature_importances_
+
+        feature_importances /= len(base_models)
+
         fig, ax = plt.subplots()
-        importances = base_model.feature_importances_
-        indices = np.argsort(importances)
-        ax.barh(range(len(indices)), importances[indices], color='blue', align='center')
+        indices = np.argsort(feature_importances)
+        ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
         ax.set_yticks(range(len(indices)))
         ax.set_yticklabels([feature_columns[i] for i in indices])
         ax.set_xlabel('Importance')
