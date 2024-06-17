@@ -139,15 +139,11 @@ if st.sidebar.button('Predict'):
     # Plot feature importances for Random Forest only
     st.subheader('Feature Importances')
     try:
-        if stacking_model_calibrated is not None:
-            st.write(f"Stacking model estimators: {stacking_model_calibrated.named_estimators_}")
-            rf_model = stacking_model_calibrated.named_estimators_.get('rf', None)
-            if rf_model is not None:
-                st.write(f"RF Model: {rf_model}")
-                base_rf_model = rf_model.estimator if hasattr(rf_model, 'estimator') else rf_model
-                feature_importances = base_rf_model.feature_importances_
-                st.write(f"Feature importances from Random Forest: {feature_importances}")
-
+        rf_model_calibrated = stacking_model_calibrated.named_estimators_.get('rf')
+        if rf_model_calibrated is not None:
+            rf_model = rf_model_calibrated.base_estimator_
+            if hasattr(rf_model, 'feature_importances_'):
+                feature_importances = rf_model.feature_importances_
                 fig, ax = plt.subplots()
                 indices = np.argsort(feature_importances)
                 ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
@@ -156,9 +152,9 @@ if st.sidebar.button('Predict'):
                 ax.set_xlabel('Importance')
                 st.pyplot(fig)
             else:
-                st.error("Random Forest model not found in the stacking model.")
+                st.error("Random Forest model does not have feature_importances_ attribute.")
         else:
-            st.error("Stacking model is None.")
+            st.error("Random Forest model not found in the stacking model.")
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
