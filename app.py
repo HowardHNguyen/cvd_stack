@@ -54,9 +54,9 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 40)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 45)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
-    sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 120)
+    sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
     bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
     cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))
