@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import joblib
+import urllib.request
 
 # URL to load the model
 model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
@@ -23,7 +23,7 @@ st.write('Enter your parameters and click Predict to get the results.')
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.slider('Enter your age:', 32, 81, 40)
+    age = st.slider('Enter your age:', 32, 81, 54)
     totchol = st.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.slider('Diastolic Blood Pressure:', 30, 150, 89)
