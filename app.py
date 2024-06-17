@@ -32,6 +32,8 @@ with col1:
     bmi = st.slider("BMI:", 14.43, 56.80, 26.77)
     cigpday = st.slider("Cigarettes Per Day:", 0, 90, 20)
     cursmoke = st.selectbox("Current Smoker:", [0, 1])
+    bpmeds = st.selectbox("On BP Meds:", [0, 1])
+    hyperten = st.selectbox("Hypertension:", [0, 1])
 
 with col2:
     glucose = st.slider("Glucose:", 39, 478, 117)
@@ -39,8 +41,6 @@ with col2:
     heartrate = st.slider("Heart Rate:", 37, 220, 91)
     prevap = st.selectbox("Prevalent Ap:", [0, 1])
     stroke = st.selectbox("Stroke:", [0, 1])
-    bpmeds = st.selectbox("On BP Meds:", [0, 1])
-    hyperten = st.selectbox("Hypertension:", [0, 1])
 
 # Constructing DataFrame for prediction
 input_data = pd.DataFrame({
