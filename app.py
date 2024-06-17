@@ -5,8 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_curve, roc_auc_score
-import urllib.request
 import os
+import urllib.request
 
 # Function to download the file
 def download_file(url, dest):
@@ -54,7 +54,7 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 45)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 54)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
