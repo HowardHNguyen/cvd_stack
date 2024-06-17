@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_curve, roc_auc_score
+from sklearn.ensemble import RandomForestClassifier
 import os
 import urllib.request
 
@@ -54,7 +55,7 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 34)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 64)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
@@ -87,6 +88,10 @@ def user_input_features():
     return features
 
 input_df = user_input_features()
+
+# Train a RandomForestClassifier for feature importance extraction
+rf_for_feature_importance = RandomForestClassifier(random_state=42)
+rf_for_feature_importance.fit(data[feature_columns], data['CVD'])
 
 # Apply the model to make predictions
 if st.sidebar.button('Predict'):
@@ -136,25 +141,17 @@ if st.sidebar.button('Predict'):
     except Exception as e:
         st.error(f"Error plotting ROC curve: {e}")
 
-    # Plot feature importances for Random Forest only
+    # Plot feature importances from the standalone RandomForestClassifier
     st.subheader('Feature Importances')
     try:
-        rf_model = stacking_model_calibrated.named_estimators_.get('rf')
-        if rf_model is not None:
-            base_estimator = rf_model.base_estimator if hasattr(rf_model, 'base_estimator') else rf_model
-            if hasattr(base_estimator, 'feature_importances_'):
-                feature_importances = base_estimator.feature_importances_
-                fig, ax = plt.subplots()
-                indices = np.argsort(feature_importances)
-                ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
-                ax.set_yticks(range(len(indices)))
-                ax.set_yticklabels([feature_columns[i] for i in indices])
-                ax.set_xlabel('Importance')
-                st.pyplot(fig)
-            else:
-                st.error("Random Forest model does not have feature_importances_ attribute.")
-        else:
-            st.error("Random Forest model not found in the stacking model.")
+        feature_importances = rf_for_feature_importance.feature_importances_
+        fig, ax = plt.subplots()
+        indices = np.argsort(feature_importances)
+        ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
+        ax.set_yticks(range(len(indices)))
+        ax.set_yticklabels([feature_columns[i] for i in indices])
+        ax.set_xlabel('Importance')
+        st.pyplot(fig)
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
