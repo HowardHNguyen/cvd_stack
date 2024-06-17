@@ -58,12 +58,12 @@ def user_input_features():
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
-    bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)
-    cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))
+    bmi = st.sidebar.slider('BMI:', 14.43, 56.80, 26.77)  
     glucose = st.sidebar.slider('Glucose:', 39, 478, 117)
-    diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
     heartrate = st.sidebar.slider('Heart Rate:', 37, 220, 91)
-    cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 1)
+    cigpday = st.sidebar.slider('Cigarettes Per Day:', 0, 90, 20)
+    diabetes = st.sidebar.selectbox('Diabetes:', (0, 1))
+    cursmoke = st.sidebar.selectbox('Current Smoker:', (0, 1))
     bpmeds = st.sidebar.selectbox('On BP Meds:', (0, 1))
     stroke = st.sidebar.selectbox('Stroke:', (0, 1))
     hyperten = st.sidebar.selectbox('Hypertension:', (0, 1))
@@ -123,7 +123,6 @@ if st.sidebar.button('Predict'):
     # Plot feature importances
     st.subheader('Feature Importances')
     try:
-        # Access feature importances from base models in stacking
         feature_importances = np.zeros(len(feature_columns))
         total_estimators = 0
 
@@ -137,6 +136,11 @@ if st.sidebar.button('Predict'):
                 st.write(f"Feature importances from {name}: {estimator.base_estimator_.feature_importances_}")
                 feature_importances += estimator.base_estimator_.feature_importances_
                 total_estimators += 1
+            elif hasattr(estimator, 'estimator'):
+                if hasattr(estimator.estimator, 'feature_importances_'):
+                    st.write(f"Feature importances from {name}: {estimator.estimator.feature_importances_}")
+                    feature_importances += estimator.estimator.feature_importances_
+                    total_estimators += 1
 
         if total_estimators > 0:
             feature_importances /= total_estimators
@@ -160,7 +164,7 @@ if st.sidebar.button('Predict'):
     try:
         fig, ax = plt.subplots()
         fpr, tpr, _ = roc_curve(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
-        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {roc_auc_score(data["CVD"], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1]):.2f})')
+        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {roc_auc_score(data["CVD"], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])::.2f})')
         ax.plot([0, 1], [0, 1], 'k--')
         ax.set_xlabel('False Positive Rate')
         ax.set_ylabel('True Positive Rate')
