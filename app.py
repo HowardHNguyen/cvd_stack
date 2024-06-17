@@ -140,21 +140,24 @@ if st.sidebar.button('Predict'):
     st.subheader('Feature Importances')
     try:
         rf_model_calibrated = stacking_model_calibrated.named_estimators_.get('rf')
+        rf_model = None
         if rf_model_calibrated is not None:
-            rf_model = rf_model_calibrated.base_estimator
-            if hasattr(rf_model, 'feature_importances_'):
-                feature_importances = rf_model.feature_importances_
-                fig, ax = plt.subplots()
-                indices = np.argsort(feature_importances)
-                ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
-                ax.set_yticks(range(len(indices)))
-                ax.set_yticklabels([feature_columns[i] for i in indices])
-                ax.set_xlabel('Importance')
-                st.pyplot(fig)
-            else:
-                st.error("Random Forest model does not have feature_importances_ attribute.")
+            if hasattr(rf_model_calibrated, 'base_estimator'):
+                rf_model = rf_model_calibrated.base_estimator
+            elif hasattr(rf_model_calibrated, 'estimator'):
+                rf_model = rf_model_calibrated.estimator
+
+        if rf_model is not None and hasattr(rf_model, 'feature_importances_'):
+            feature_importances = rf_model.feature_importances_
+            fig, ax = plt.subplots()
+            indices = np.argsort(feature_importances)
+            ax.barh(range(len(indices)), feature_importances[indices], color='blue', align='center')
+            ax.set_yticks(range(len(indices)))
+            ax.set_yticklabels([feature_columns[i] for i in indices])
+            ax.set_xlabel('Importance')
+            st.pyplot(fig)
         else:
-            st.error("Random Forest model not found in the stacking model.")
+            st.error("Random Forest model does not have feature_importances_ attribute.")
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
