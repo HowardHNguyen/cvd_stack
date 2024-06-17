@@ -120,6 +120,22 @@ if st.sidebar.button('Predict'):
     except:
         pass
 
+    # Plot ROC curve
+    st.subheader('Model Performance')
+    try:
+        fig, ax = plt.subplots()
+        fpr, tpr, _ = roc_curve(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
+        auc_score = roc_auc_score(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
+        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {auc_score:.2f})')
+        ax.plot([0, 1], [0, 1], 'k--')
+        ax.set_xlabel('False Positive Rate')
+        ax.set_ylabel('True Positive Rate')
+        ax.set_title('ROC Curve')
+        ax.legend(loc='best')
+        st.pyplot(fig)
+    except Exception as e:
+        st.error(f"Error plotting ROC curve: {e}")
+
     # Plot feature importances
     st.subheader('Feature Importances')
     try:
@@ -136,16 +152,24 @@ if st.sidebar.button('Predict'):
                 st.write(f"Feature importances from {name}: {estimator.base_estimator_.feature_importances_}")
                 feature_importances += estimator.base_estimator_.feature_importances_
                 total_estimators += 1
+            elif hasattr(estimator, 'coef_'):
+                st.write(f"Feature importances from {name}: {estimator.coef_}")
+                feature_importances += np.abs(estimator.coef_).flatten()
+                total_estimators += 1
             elif hasattr(estimator, 'estimator'):
                 if hasattr(estimator.estimator, 'feature_importances_'):
                     st.write(f"Feature importances from {name}: {estimator.estimator.feature_importances_}")
                     feature_importances += estimator.estimator.feature_importances_
                     total_estimators += 1
+                elif hasattr(estimator.estimator, 'coef_'):
+                    st.write(f"Feature importances from {name}: {estimator.estimator.coef_}")
+                    feature_importances += np.abs(estimator.estimator.coef_).flatten()
+                    total_estimators += 1
 
         if total_estimators > 0:
             feature_importances /= total_estimators
         else:
-            st.write("No base estimator has feature_importances_ attribute.")
+            st.write("No base estimator has feature_importances_ or coef_ attribute.")
 
         st.write(f"Aggregated feature importances: {feature_importances}")
 
@@ -159,21 +183,6 @@ if st.sidebar.button('Predict'):
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
-    # Plot ROC curve
-    st.subheader('Model Performance')
-    try:
-        fig, ax = plt.subplots()
-        fpr, tpr, _ = roc_curve(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
-        auc_score = roc_auc_score(data['CVD'], stacking_model_calibrated.predict_proba(data[feature_columns])[:, 1])
-        ax.plot(fpr, tpr, label=f'Stacking Model (AUC = {auc_score:.2f})')
-        ax.plot([0, 1], [0, 1], 'k--')
-        ax.set_xlabel('False Positive Rate')
-        ax.set_ylabel('True Positive Rate')
-        ax.set_title('ROC Curve')
-        ax.legend(loc='best')
-        st.pyplot(fig)
-    except Exception as e:
-        st.error(f"Error plotting ROC curve: {e}")
 else:
     st.write("## CVD Prediction App by Howard Nguyen")
     st.write("#### Enter your parameters and click Predict to get the results.")
