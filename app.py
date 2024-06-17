@@ -141,7 +141,7 @@ if st.sidebar.button('Predict'):
     try:
         rf_model_calibrated = stacking_model_calibrated.named_estimators_.get('rf')
         if rf_model_calibrated is not None:
-            rf_model = rf_model_calibrated.base_estimator_
+            rf_model = rf_model_calibrated.base_estimator
             if hasattr(rf_model, 'feature_importances_'):
                 feature_importances = rf_model.feature_importances_
                 fig, ax = plt.subplots()
