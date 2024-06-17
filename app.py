@@ -54,7 +54,7 @@ feature_columns = ['AGE', 'TOTCHOL', 'SYSBP', 'DIABP', 'BMI', 'CURSMOKE',
 st.sidebar.header('Enter your parameters')
 
 def user_input_features():
-    age = st.sidebar.slider('Enter your age:', 32, 81, 50)
+    age = st.sidebar.slider('Enter your age:', 32, 81, 54)
     totchol = st.sidebar.slider('Total Cholesterol:', 107, 696, 200)
     sysbp = st.sidebar.slider('Systolic Blood Pressure:', 83, 295, 151)
     diabp = st.sidebar.slider('Diastolic Blood Pressure:', 30, 150, 89)
@@ -128,8 +128,11 @@ if st.sidebar.button('Predict'):
         total_estimators = 0
 
         for name, estimator in stacking_model_calibrated.named_estimators_.items():
-            st.write(f"Estimator: {name}, Type: {type(estimator)}")
-            if hasattr(estimator, 'base_estimator_') and hasattr(estimator.base_estimator_, 'feature_importances_'):
+            if hasattr(estimator, 'feature_importances_'):
+                st.write(f"Feature importances from {name}: {estimator.feature_importances_}")
+                feature_importances += estimator.feature_importances_
+                total_estimators += 1
+            elif hasattr(estimator, 'base_estimator_') and hasattr(estimator.base_estimator_, 'feature_importances_'):
                 st.write(f"Feature importances from {name}: {estimator.base_estimator_.feature_importances_}")
                 feature_importances += estimator.base_estimator_.feature_importances_
                 total_estimators += 1
