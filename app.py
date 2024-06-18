@@ -94,7 +94,7 @@ rf_for_feature_importance = RandomForestClassifier(random_state=42)
 rf_for_feature_importance.fit(data[feature_columns], data['CVD'])
 
 # Apply the model to make predictions
-if st.sidebar.button('Predict'):
+if st.sidebar.button('PREDICT NOW'):
     try:
         stacking_proba_calibrated = stacking_model_calibrated.predict_proba(input_df)[:, 1]
     except Exception as e:
