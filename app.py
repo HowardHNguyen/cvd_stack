@@ -88,6 +88,10 @@ def user_input_features():
 
 input_df = user_input_features()
 
+# Train a RandomForestClassifier for feature importance extraction
+rf_for_feature_importance = RandomForestClassifier(random_state=42)
+rf_for_feature_importance.fit(data[feature_columns], data['CVD'])
+
 # Apply the model to make predictions
 if st.sidebar.button('Predict'):
     try:
