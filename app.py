@@ -138,15 +138,18 @@ if st.sidebar.button('Predict'):
     # Plot feature importances for Random Forest
     st.subheader('Feature Importances (Random Forest)')
     try:
-        rf_model = stacking_model_calibrated.named_estimators_['rf']
-        fig, ax = plt.subplots()
-        importances = rf_model.base_estimator.feature_importances_
-        indices = np.argsort(importances)
-        ax.barh(range(len(indices)), importances[indices], color='blue', align='center')
-        ax.set_yticks(range(len(indices)))
-        ax.set_yticklabels([feature_columns[i] for i in indices])
-        ax.set_xlabel('Importance')
-        st.pyplot(fig)
+        rf_model = stacking_model_calibrated.named_estimators_['rf'].base_estimator
+        if hasattr(rf_model, 'feature_importances_'):
+            importances = rf_model.feature_importances_
+            indices = np.argsort(importances)
+            fig, ax = plt.subplots()
+            ax.barh(range(len(indices)), importances[indices], color='blue', align='center')
+            ax.set_yticks(range(len(indices)))
+            ax.set_yticklabels([feature_columns[i] for i in indices])
+            ax.set_xlabel('Importance')
+            st.pyplot(fig)
+        else:
+            st.error("Random Forest model does not have feature_importances_ attribute.")
     except Exception as e:
         st.error(f"Error plotting feature importances: {e}")
 
