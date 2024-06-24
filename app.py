@@ -7,18 +7,24 @@ from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 import os
-import urllib.request
+import requests
 
 # Function to download the file
 def download_file(url, dest):
     try:
-        urllib.request.urlretrieve(url, dest)
-        return True
+        response = requests.get(url)
+        if response.status_code == 200:
+            with open(dest, 'wb') as f:
+                f.write(response.content)
+            return True
+        else:
+            st.error(f"Error downloading {url}: HTTP {response.status_code}")
+            return False
     except Exception as e:
         st.error(f"Error downloading {url}: {e}")
         return False
 
-# URL for the combined model file
+# URL for the model file (ensure it is the direct download link)
 model_url = 'https://drive.google.com/uc?id=1Mm1uQlx4P7mI2M2Z9vJnnrNa_UMn33Hg'
 
 # Local path for the model file
@@ -29,7 +35,7 @@ if not os.path.exists(model_path):
     st.info(f"Downloading {model_path}...")
     download_file(model_url, model_path)
 
-# Load the combined model
+# Load the model
 try:
     stacking_model_calibrated = joblib.load(model_path)
 except Exception as e:
