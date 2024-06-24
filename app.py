@@ -35,15 +35,22 @@ if not os.path.exists(model_path):
     st.info(f"Downloading {model_path}...")
     if download_file(model_url, model_path):
         st.success("Model downloaded successfully")
+        # Verify the file size
+        file_size = os.path.getsize(model_path)
+        st.info(f"Downloaded model size: {file_size} bytes")
     else:
         st.error("Failed to download model")
 
-# Load the model
-try:
-    stacking_model_calibrated = joblib.load(model_path)
-    st.success("Model loaded successfully")
-except Exception as e:
-    st.error(f"Error loading model: {e}")
+# Check if the file exists and has a valid size before loading
+if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
+    try:
+        stacking_model_calibrated = joblib.load(model_path)
+        st.success("Model loaded successfully")
+    except Exception as e:
+        st.error(f"Error loading model: {e}")
+        stacking_model_calibrated = None
+else:
+    st.error("Model file is missing or empty.")
     stacking_model_calibrated = None
 
 # Load the dataset
@@ -184,6 +191,7 @@ if st.sidebar.button('PREDICT NOW'):
         - **DIABETES:** The presence of diabetes is a minor factor in this prediction.
         - **CURSMOKE (Current Smoker):** Whether the individual is currently smoking has the least impact compared to other factors.
         """)
+
     else:
         st.error("Model not loaded successfully. Cannot make predictions.")
 
