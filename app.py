@@ -8,6 +8,7 @@ from sklearn.metrics import roc_curve, roc_auc_score
 from sklearn.ensemble import RandomForestClassifier
 import os
 import requests
+import traceback
 
 # Function to download the file
 def download_file(url, dest):
@@ -47,7 +48,7 @@ if os.path.exists(model_path) and os.path.getsize(model_path) > 0:
         stacking_model_calibrated = joblib.load(model_path)
         st.success("Model loaded successfully")
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"Error loading model: {traceback.format_exc()}")
         stacking_model_calibrated = None
 else:
     st.error("Model file is missing or empty.")
@@ -174,6 +175,7 @@ if st.sidebar.button('PREDICT NOW'):
             st.pyplot(fig)
         except Exception as e:
             st.error(f"Error plotting feature importances: {e}")
+
 
         # Add explanations for the features
         st.markdown("""
