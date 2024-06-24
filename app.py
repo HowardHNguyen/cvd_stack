@@ -176,7 +176,6 @@ if st.sidebar.button('PREDICT NOW'):
         except Exception as e:
             st.error(f"Error plotting feature importances: {e}")
 
-
         # Add explanations for the features
         st.markdown("""
         - **Stroke:** The history of stroke is the most significant factor.
@@ -193,9 +192,9 @@ if st.sidebar.button('PREDICT NOW'):
         - **DIABETES:** The presence of diabetes is a minor factor in this prediction.
         - **CURSMOKE (Current Smoker):** Whether the individual is currently smoking has the least impact compared to other factors.
         """)
-
     else:
         st.error("Model not loaded successfully. Cannot make predictions.")
+
 
 else:
     st.write("## CVD Prediction App by Howard Nguyen")
