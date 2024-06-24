@@ -33,11 +33,15 @@ model_path = 'stacking_model_calibrated.pkl'
 # Download the model if not already present
 if not os.path.exists(model_path):
     st.info(f"Downloading {model_path}...")
-    download_file(model_url, model_path)
+    if download_file(model_url, model_path):
+        st.success("Model downloaded successfully")
+    else:
+        st.error("Failed to download model")
 
 # Load the model
 try:
     stacking_model_calibrated = joblib.load(model_path)
+    st.success("Model loaded successfully")
 except Exception as e:
     st.error(f"Error loading model: {e}")
 
@@ -45,6 +49,7 @@ except Exception as e:
 data_url = 'https://raw.githubusercontent.com/HowardHNguyen/cvd/master/frmgham2.csv'
 try:
     data = pd.read_csv(data_url)
+    st.success("Data loaded successfully")
 except Exception as e:
     st.error(f"Error loading data: {e}")
 
