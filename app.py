@@ -19,7 +19,7 @@ def download_file(url, dest):
         return False
 
 # URL for the combined model file
-model_url = 'https://howardnguyen.com/data/stacking_model_calibrated.pkl'
+model_url = 'https://drive.google.com/file/d/1Mm1uQlx4P7mI2M2Z9vJnnrNa_UMn33Hg/view?usp=drive_link'
 
 # Local path for the model file
 model_path = 'stacking_model_calibrated.pkl'
